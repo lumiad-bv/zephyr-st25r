@@ -13,7 +13,7 @@
 
 #if DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
 
-LOG_MODULE_DECLARE(ST25R);
+LOG_MODULE_DECLARE(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 static const struct device *s_spi_dev;
 

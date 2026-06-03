@@ -151,3 +151,4 @@ endif # ST25R
 
 module = ST25R
 module-str = st25r
+source "subsys/logging/Kconfig.template.log_config"

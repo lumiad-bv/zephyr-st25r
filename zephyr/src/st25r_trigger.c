@@ -12,7 +12,7 @@
 
 #include "st25r.h"
 
-LOG_MODULE_DECLARE(ST25R);
+LOG_MODULE_DECLARE(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 static void st25r_handle_interrupt(const struct device *dev)
 {

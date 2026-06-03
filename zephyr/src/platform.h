@@ -199,7 +199,8 @@ void platform_st25r_i2c_recv(uint16_t addr, uint8_t* rxBuf, uint16_t len);
 #define platformI2CSlaveAddrWR(add)                                                                 /*!< I2C Slave address for Write operation       */
 #define platformI2CSlaveAddrRD(add)                                                                 /*!< I2C Slave address for Read operation        */
 
-#define platformLog(...)                              printk(__VA_ARGS__)                         /*!< Log  method                                 */
+void platform_st25r_log(const char *fmt, ...);
+#define platformLog(...)                              platform_st25r_log(__VA_ARGS__)              /*!< Log  method (deferred via Zephyr LOG)       */
 
 /**
   * @}

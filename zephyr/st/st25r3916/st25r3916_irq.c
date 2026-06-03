@@ -62,6 +62,13 @@ typedef struct
 
 static volatile st25r3916Interrupt   st25r3916interrupt; /*!< Instance of ST25R3916 interrupt */
 
+static void st25r3916PollPendingInterrupts(void)
+{
+    if (platformGpioIsHigh(ST25R_INT_PORT, ST25R_INT_PIN)) {
+        st25r3916CheckForReceivedInterrupts();
+    }
+}
+
 /*
 ******************************************************************************
 * GLOBAL FUNCTIONS
@@ -162,6 +169,7 @@ uint32_t st25r3916WaitForInterruptsTimed( uint32_t mask, uint16_t tmo )
     /* Run until specific interrupt has happen or the timer has expired */
     do 
     {
+        st25r3916PollPendingInterrupts();
         status = (st25r3916interrupt.status & mask);
     } while( ( (!platformTimerIsExpired( tmrDelay )) || (tmo == 0U)) && (status == 0U) );
     
@@ -181,6 +189,8 @@ uint32_t st25r3916WaitForInterruptsTimed( uint32_t mask, uint16_t tmo )
 uint32_t st25r3916GetInterrupt( uint32_t mask )
 {
     uint32_t irqs;
+
+    st25r3916PollPendingInterrupts();
 
     irqs = (st25r3916interrupt.status & mask);
     if(irqs != ST25R3916_IRQ_MASK_NONE)

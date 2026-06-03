@@ -2,6 +2,7 @@
 
 #include "platform.h"
 
+#include <stdarg.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
@@ -22,4 +23,15 @@ void platform_st25r_unprotect_comm()
 void platform_st25r_global_error(const char *file, long line)
 {
     LOG_ERR("Error at %s:%ld", file, line);
+}
+
+void platform_st25r_log(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    /* Use a fixed buffer for deferred-safe logging */
+    char buf[128];
+    vsnprintk(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    LOG_INF("%s", buf);
 }

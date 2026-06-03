@@ -21,7 +21,7 @@ int st25r_spi_init(const struct device *dev)
 {
     const struct st25r_device_config *config = dev->config;
 
-    if (!spi_is_ready(&config->spi)) {
+    if (!spi_is_ready_dt(&config->spi)) {
         LOG_ERR("Bus device is not ready");
         return -ENODEV;
     }

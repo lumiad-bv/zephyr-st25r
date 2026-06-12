@@ -12,7 +12,7 @@
 
 #include "st25r.h"
 
-LOG_MODULE_DECLARE(ST25R);
+LOG_MODULE_DECLARE(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 static void st25r_handle_interrupt(const struct device *dev)
 {
@@ -66,12 +66,12 @@ static void st25r_work_cb(struct k_work *work)
 static gpio_pin_t s_int_pin;
 static const struct device *s_int_port;
 
-gpio_pin_t platform_st25r_int_pin()
+gpio_pin_t platform_st25r_int_pin(void)
 {
     return s_int_pin;
 }
 
-const struct device *platform_st25r_int_port()
+const struct device *platform_st25r_int_port(void)
 {
     return s_int_port;
 }

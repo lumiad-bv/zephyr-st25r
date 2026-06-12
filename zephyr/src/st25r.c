@@ -17,7 +17,7 @@
 
 #include "st25r.h"
 
-LOG_MODULE_REGISTER(ST25R);
+LOG_MODULE_REGISTER(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 static int st25r_init_interface(const struct device *dev)
 {

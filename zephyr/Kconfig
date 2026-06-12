@@ -73,8 +73,19 @@ config RFAL_FEATURE_DYNAMIC_ANALOG_CONFIG
     bool "Enable/Disable Analog Configs to be dynamically updated (RAM)"
     default n
 
+config RFAL_ANALOG_CONFIG_CUSTOM
+	bool "Use a custom RFAL analog configuration table"
+	default n
+	help
+	  Use board/application-provided rfalAnalogConfigCustomSettings instead of
+	  the RFAL default analog configuration table bundled with the driver.
+
 config RFAL_FEATURE_DPO
     bool "Enable/Disable RFAL Dynamic Power Output support"
+    default n
+
+config RFAL_FEATURE_DLMA
+    bool "Enable/Disable RFAL Dynamic LMA support"
     default n
 
 config RFAL_FEATURE_ISO_DEP
@@ -115,6 +126,7 @@ config RFAL_FEATURE_NFC_DEP_PDU_MAX_LEN
 
 choice ST25R_TRIGGER_MODE
 	prompt "Trigger mode"
+	default ST25R_TRIGGER_GLOBAL_THREAD
 	help
 	  Specify the type of triggering to be used by the driver.
 
@@ -149,5 +161,9 @@ config ST25R_THREAD_STACK_SIZE
 
 endif # ST25R
 
+config ST25R_LOG_LEVEL
+	default 3
+
 module = ST25R
 module-str = st25r
+source "subsys/logging/Kconfig.template.log_config"

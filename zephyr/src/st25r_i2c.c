@@ -13,7 +13,7 @@
 
 #if DT_ANY_INST_ON_BUS_STATUS_OKAY(i2c)
 
-LOG_MODULE_DECLARE(ST25R);
+LOG_MODULE_DECLARE(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 static const struct device *s_i2c_dev;
 
@@ -21,7 +21,7 @@ int st25r_i2c_init(const struct device *dev)
 {
     const struct st25r_device_config *config = dev->config;
 
-    if (!device_is_ready(config->i2c.bus)) {
+    if (!i2c_is_ready_dt(&config->i2c)) {
         LOG_ERR("Bus device is not ready");
         return -ENODEV;
     }

@@ -12,6 +12,8 @@ if(CONFIG_ST25R)
     zephyr_include_directories(src)
 endif()
 
-add_subdirectory_ifdef(CONFIG_ST25R st/rfal)
-add_subdirectory_ifdef(CONFIG_ST25R3916 st/st25r3916)
-add_subdirectory_ifdef(CONFIG_ST25R3916B st/st25r3916)
+add_subdirectory_ifdef(CONFIG_ST25R st)
+
+if(CONFIG_ST25R3916 OR CONFIG_ST25R3916B)
+    add_subdirectory(st/source/st25r3916)
+endif()

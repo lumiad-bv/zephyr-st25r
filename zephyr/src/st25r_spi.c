@@ -13,7 +13,7 @@
 
 #if DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
 
-LOG_MODULE_DECLARE(ST25R);
+LOG_MODULE_DECLARE(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 static const struct device *s_spi_dev;
 
@@ -21,7 +21,7 @@ int st25r_spi_init(const struct device *dev)
 {
     const struct st25r_device_config *config = dev->config;
 
-    if (!spi_is_ready(&config->spi)) {
+    if (!spi_is_ready_dt(&config->spi)) {
         LOG_ERR("Bus device is not ready");
         return -ENODEV;
     }
@@ -31,12 +31,12 @@ int st25r_spi_init(const struct device *dev)
     return 0;
 }
 
-void platform_st25r_spi_select()
+void platform_st25r_spi_select(void)
 {
     LOG_DBG("SPI select");
 }
 
-void platform_st25r_spi_deselect()
+void platform_st25r_spi_deselect(void)
 {
     LOG_DBG("SPI deselect");
     /* Our device is flagged with SPI_HOLD_ON_CS|SPI_LOCK_ON, release */

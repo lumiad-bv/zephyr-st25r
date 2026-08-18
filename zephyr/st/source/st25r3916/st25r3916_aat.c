@@ -44,6 +44,7 @@
 #include "st25r3916_com.h"
 #include "rfal_platform.h"
 #include "rfal_chip.h"
+#include <stdlib.h>
 
 
 /*

@@ -38,6 +38,8 @@
 * INCLUDES
 ******************************************************************************
 */
+#include <stdlib.h>
+
 #include "st25r3916_aat.h"
 #include "rfal_utils.h"
 #include "st25r3916.h"

@@ -10,6 +10,7 @@ if(CONFIG_ST25R)
         src/st25r_trigger.c
     )
     zephyr_include_directories(src)
+    zephyr_include_directories(include)
 endif()
 
 add_subdirectory_ifdef(CONFIG_ST25R st)

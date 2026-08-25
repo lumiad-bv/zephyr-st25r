@@ -124,8 +124,15 @@ config RFAL_FEATURE_NFC_DEP_PDU_MAX_LEN
     int "NFC-DEP PDU max length"
     default 512
 
+config ST25R_TRIGGER_DEFERRED_DEFAULT
+	bool
+	help
+	  Allow an integrating module to make externally deferred interrupt
+	  processing the default without selecting a choice symbol directly.
+
 choice ST25R_TRIGGER_MODE
 	prompt "Trigger mode"
+	default ST25R_TRIGGER_DEFERRED if ST25R_TRIGGER_DEFERRED_DEFAULT
 	default ST25R_TRIGGER_GLOBAL_THREAD
 	help
 	  Specify the type of triggering to be used by the driver.
@@ -142,6 +149,15 @@ config ST25R_TRIGGER_OWN_THREAD
 	bool "Use own thread"
 	depends on GPIO
 	select ST25R_TRIGGER
+
+config ST25R_TRIGGER_DEFERRED
+	bool "Use externally deferred handler"
+	depends on GPIO
+	select ST25R_TRIGGER
+	help
+	  Disable the GPIO interrupt and notify a registered ISR-context callback.
+	  The integrating module must schedule st25r_process_deferred_interrupt()
+	  from a thread to drain the interrupt registers and re-enable GPIO.
 
 endchoice
 

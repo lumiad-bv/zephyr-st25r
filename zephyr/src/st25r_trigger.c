@@ -14,6 +14,8 @@
 
 LOG_MODULE_DECLARE(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
+#if defined(CONFIG_ST25R_TRIGGER_OWN_THREAD) || \
+	defined(CONFIG_ST25R_TRIGGER_GLOBAL_THREAD)
 static void st25r_handle_interrupt(const struct device *dev)
 {
 	const struct st25r_device_config *cfg = dev->config;
@@ -22,6 +24,68 @@ static void st25r_handle_interrupt(const struct device *dev)
 
 	gpio_pin_interrupt_configure_dt(&cfg->int_gpio, GPIO_INT_EDGE_TO_ACTIVE);
 }
+#endif
+
+#ifdef CONFIG_ST25R_TRIGGER_DEFERRED
+int st25r_set_deferred_trigger_handler(
+	const struct device *dev,
+	st25r_deferred_trigger_handler_t handler,
+	void *context)
+{
+	struct st25r_data *st25r;
+	const struct st25r_device_config *cfg;
+	int ret;
+
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
+	st25r = dev->data;
+	cfg = dev->config;
+
+	if (handler == NULL) {
+		ret = gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
+						      GPIO_INT_DISABLE);
+		st25r->deferred_handler = NULL;
+		st25r->deferred_context = NULL;
+		return ret;
+	}
+
+	st25r->deferred_context = context;
+	st25r->deferred_handler = handler;
+	ret = gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
+					      GPIO_INT_EDGE_TO_ACTIVE);
+	if (ret < 0) {
+		st25r->deferred_handler = NULL;
+		st25r->deferred_context = NULL;
+	}
+
+	return ret;
+}
+
+int st25r_process_deferred_interrupt(const struct device *dev)
+{
+	struct st25r_data *st25r;
+	const struct st25r_device_config *cfg;
+
+	if (dev == NULL) {
+		return -EINVAL;
+	}
+
+	__ASSERT_NO_MSG(!k_is_in_isr());
+
+	st25r = dev->data;
+	cfg = dev->config;
+	st25r3916Isr();
+
+	if (st25r->deferred_handler != NULL) {
+		return gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
+						       GPIO_INT_EDGE_TO_ACTIVE);
+	}
+
+	return 0;
+}
+#endif /* CONFIG_ST25R_TRIGGER_DEFERRED */
 
 static void st25r_gpio_callback(const struct device *dev,
 				 struct gpio_callback *cb, uint32_t pins)
@@ -40,6 +104,14 @@ static void st25r_gpio_callback(const struct device *dev,
 	k_sem_give(&st25r->gpio_sem);
 #elif defined(CONFIG_ST25R_TRIGGER_GLOBAL_THREAD)
 	k_work_submit(&st25r->work);
+#elif defined(CONFIG_ST25R_TRIGGER_DEFERRED)
+	/* ISR side of the deferred contract: only notify the owner. The owner
+	 * schedules st25r_process_deferred_interrupt() from a thread.
+	 */
+	if (st25r->deferred_handler != NULL) {
+		st25r->deferred_handler(st25r->dev,
+					st25r->deferred_context);
+	}
 #endif /* CONFIG_ST25R_TRIGGER_OWN_THREAD */
 }
 
@@ -102,6 +174,9 @@ int st25r_init_interrupt(const struct device *dev)
 		       0, K_NO_WAIT);
 #elif defined(CONFIG_ST25R_TRIGGER_GLOBAL_THREAD)
 	st25r->work.handler = st25r_work_cb;
+#elif defined(CONFIG_ST25R_TRIGGER_DEFERRED)
+	st25r->deferred_handler = NULL;
+	st25r->deferred_context = NULL;
 #endif /* CONFIG_ST25R_TRIGGER_OWN_THREAD */
 
 	ret = gpio_pin_configure_dt(&cfg->int_gpio, GPIO_INPUT);
@@ -119,5 +194,13 @@ int st25r_init_interrupt(const struct device *dev)
 		return -EIO;
 	}
 
-	return gpio_pin_interrupt_configure_dt(&cfg->int_gpio, GPIO_INT_EDGE_TO_ACTIVE);
+#if defined(CONFIG_ST25R_TRIGGER_DEFERRED)
+	/* The integrating module enables the GPIO only after both sides of the
+	 * deferred callback contract are ready.
+	 */
+	return 0;
+#else
+	return gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
+					       GPIO_INT_EDGE_TO_ACTIVE);
+#endif
 }

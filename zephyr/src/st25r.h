@@ -9,6 +9,8 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/drivers/sensor.h>
 
+#include <st25r_trigger.h>
+
 /**
  * struct st25r_device_config - st25r hw configuration
  * @spi: SPI bus spec.
@@ -36,6 +38,9 @@ struct st25r_data {
 	struct k_sem gpio_sem;
 #elif defined(CONFIG_ST25R_TRIGGER_GLOBAL_THREAD)
 	struct k_work work;
+#elif defined(CONFIG_ST25R_TRIGGER_DEFERRED)
+	st25r_deferred_trigger_handler_t deferred_handler;
+	void *deferred_context;
 #endif /* CONFIG_ST25R_TRIGGER_GLOBAL_THREAD */
 };
 

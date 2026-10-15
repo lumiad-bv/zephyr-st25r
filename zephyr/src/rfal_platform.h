@@ -62,7 +62,10 @@ static inline uint32_t platform_st25r_timer_create(uint16_t timeout_ms)
 
 static inline bool platform_st25r_timer_is_expired(uint32_t timer)
 {
-    return (int32_t)(k_uptime_get_32() - timer) >= 0;
+    /* RFAL needs at least the requested time to have passed. Uptime is a
+     * truncated millisecond count, so ">= 0" could expire up to 1 ms early.
+     */
+    return (int32_t)(k_uptime_get_32() - timer) > 0;
 }
 
 static inline uint32_t platform_st25r_timer_get_remaining(uint32_t timer)

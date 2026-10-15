@@ -1,4 +1,4 @@
-// Copyright Â© 2023 Vouch.io LLC
+// Copyright © 2023 Vouch.io LLC
 
 #define DT_DRV_COMPAT st_st25r
 
@@ -15,14 +15,42 @@
 LOG_MODULE_DECLARE(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 #if defined(CONFIG_ST25R_TRIGGER_OWN_THREAD) || \
+	defined(CONFIG_ST25R_TRIGGER_GLOBAL_THREAD) || \
+	defined(CONFIG_ST25R_TRIGGER_DEFERRED)
+/* Re-arm the edge interrupt. The ST25R holds IRQ active until its interrupt
+ * registers are read, so an IRQ raised while the pin was disarmed produces no
+ * edge. Returns 1, with the pin disarmed again, when the line is already
+ * active and must be drained once more; 0 when armed and idle.
+ */
+static int st25r_rearm_interrupt(const struct st25r_device_config *cfg)
+{
+	int ret;
+
+	ret = gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
+					      GPIO_INT_EDGE_TO_ACTIVE);
+	if (ret < 0) {
+		return ret;
+	}
+
+	if (gpio_pin_get_dt(&cfg->int_gpio) <= 0) {
+		return 0;
+	}
+
+	ret = gpio_pin_interrupt_configure_dt(&cfg->int_gpio, GPIO_INT_DISABLE);
+
+	return (ret < 0) ? ret : 1;
+}
+#endif
+
+#if defined(CONFIG_ST25R_TRIGGER_OWN_THREAD) || \
 	defined(CONFIG_ST25R_TRIGGER_GLOBAL_THREAD)
 static void st25r_handle_interrupt(const struct device *dev)
 {
 	const struct st25r_device_config *cfg = dev->config;
 
-	st25r3916Isr();
-
-	gpio_pin_interrupt_configure_dt(&cfg->int_gpio, GPIO_INT_EDGE_TO_ACTIVE);
+	do {
+		st25r3916Isr();
+	} while (st25r_rearm_interrupt(cfg) > 0);
 }
 #endif
 
@@ -67,6 +95,7 @@ int st25r_process_deferred_interrupt(const struct device *dev)
 {
 	struct st25r_data *st25r;
 	const struct st25r_device_config *cfg;
+	int ret;
 
 	if (dev == NULL) {
 		return -EINVAL;
@@ -76,14 +105,18 @@ int st25r_process_deferred_interrupt(const struct device *dev)
 
 	st25r = dev->data;
 	cfg = dev->config;
-	st25r3916Isr();
 
-	if (st25r->deferred_handler != NULL) {
-		return gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
-						       GPIO_INT_EDGE_TO_ACTIVE);
-	}
+	do {
+		st25r3916Isr();
 
-	return 0;
+		if (st25r->deferred_handler == NULL) {
+			return 0;
+		}
+
+		ret = st25r_rearm_interrupt(cfg);
+	} while (ret > 0);
+
+	return ret;
 }
 #endif /* CONFIG_ST25R_TRIGGER_DEFERRED */
 

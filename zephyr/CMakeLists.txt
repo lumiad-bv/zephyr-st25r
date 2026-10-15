@@ -18,3 +18,5 @@ add_subdirectory_ifdef(CONFIG_ST25R st)
 if(CONFIG_ST25R3916 OR CONFIG_ST25R3916B)
     add_subdirectory(st/source/st25r3916)
 endif()
+
+add_subdirectory_ifdef(CONFIG_ST25R500 st/source/st25r500)

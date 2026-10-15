@@ -15,10 +15,18 @@ menuconfig ST25R3916B
 	help
 		ST25R3916B IC driver
 
+menuconfig ST25R500
+	bool "ST25R500 / ST25R300"
+	depends on ST25R && !ST25R3916 && !ST25R3916B
+	help
+		ST25R500 IC driver. ST's RFAL drives the ST25R300 with the same
+		driver; both report IC type 0x16. SPI only.
+
 if ST25R
 
 config RFAL_USE_I2C
     bool "Enable RFAL support for I2C. If disabled, SPI will be assumed."
+    depends on !ST25R500
     default n
 
 config RFAL_FEATURE_LISTEN_MODE
@@ -83,6 +91,14 @@ config RFAL_ANALOG_CONFIG_CUSTOM
 config RFAL_FEATURE_DPO
     bool "Enable/Disable RFAL Dynamic Power Output support"
     default n
+
+config RFAL_FEATURE_DPO_CR
+    bool "Enable/Disable ST25R500 Dynamic Power Output by current regulation"
+    depends on ST25R500 && !RFAL_FEATURE_DPO
+    default n
+    help
+      DPO variant that adjusts the driver from the measured driver current.
+      ST labels it ST25R500-only; it is not confirmed on the ST25R300.
 
 config RFAL_FEATURE_DLMA
     bool "Enable/Disable RFAL Dynamic LMA support"

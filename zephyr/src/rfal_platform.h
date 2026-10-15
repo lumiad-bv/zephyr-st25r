@@ -9,8 +9,10 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>              /* abs() in st25r500_dpocr.c */
 
 #include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/__assert.h>
@@ -25,6 +27,23 @@ const struct device *platform_st25r_int_port(void);
 
 #define ST25R_INT_PIN            platform_st25r_int_pin()
 #define ST25R_INT_PORT           platform_st25r_int_port()
+
+/* The ST25R500 driver pulses RESET at init and holds it for the hard-reset
+ * low-power mode. st25r_init() configures the pin as an inactive output.
+ */
+#define ST25R_DT_NODE            DT_COMPAT_GET_ANY_STATUS_OKAY(st_st25r)
+#if DT_NODE_HAS_PROP(ST25R_DT_NODE, reset_gpios)
+#define ST25R_RESET_PIN          DT_GPIO_PIN(ST25R_DT_NODE, reset_gpios)
+#define ST25R_RESET_PORT         DEVICE_DT_GET(DT_GPIO_CTLR(ST25R_DT_NODE, reset_gpios))
+#endif
+
+#if defined(CONFIG_ST25R500)
+/* Read IRQ status whenever the pin is high in rfalWorker() and while waiting
+ * for interrupts. This drains an IRQ raised while the GPIO edge was disarmed.
+ * The ST25R3916 driver gets the same behaviour from a local patch.
+ */
+#define ST25R_POLL_IRQ
+#endif
 
 void platform_st25r_protect_comm(void);
 void platform_st25r_unprotect_comm(void);
@@ -123,6 +142,7 @@ void platform_st25r_log(const char *fmt, ...);
 #define RFAL_FEATURE_ST25xV                 IS_ENABLED(CONFIG_RFAL_FEATURE_ST25xV)
 #define RFAL_FEATURE_DYNAMIC_ANALOG_CONFIG  IS_ENABLED(CONFIG_RFAL_FEATURE_DYNAMIC_ANALOG_CONFIG)
 #define RFAL_FEATURE_DPO                    IS_ENABLED(CONFIG_RFAL_FEATURE_DPO)
+#define RFAL_FEATURE_DPO_CR                 IS_ENABLED(CONFIG_RFAL_FEATURE_DPO_CR)
 #define RFAL_FEATURE_DLMA                   IS_ENABLED(CONFIG_RFAL_FEATURE_DLMA)
 #define RFAL_FEATURE_ISO_DEP                IS_ENABLED(CONFIG_RFAL_FEATURE_ISO_DEP)
 #define RFAL_FEATURE_ISO_DEP_POLL           IS_ENABLED(CONFIG_RFAL_FEATURE_ISO_DEP_POLL)

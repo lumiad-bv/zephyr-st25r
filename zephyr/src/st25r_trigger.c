@@ -1,4 +1,4 @@
-// Copyright © 2023 Vouch.io LLC
+// Copyright Â© 2023 Vouch.io LLC
 
 #define DT_DRV_COMPAT st_st25r
 
@@ -8,7 +8,13 @@
 #include <zephyr/logging/log.h>
 
 #include "platform.h"
+#if defined(CONFIG_ST25R500)
+#include "st25r500_irq.h"
+#define st25r_chip_isr()	st25r500Isr()
+#else
 #include "st25r3916_irq.h"
+#define st25r_chip_isr()	st25r3916Isr()
+#endif
 
 #include "st25r.h"
 
@@ -49,7 +55,7 @@ static void st25r_handle_interrupt(const struct device *dev)
 	const struct st25r_device_config *cfg = dev->config;
 
 	do {
-		st25r3916Isr();
+		st25r_chip_isr();
 	} while (st25r_rearm_interrupt(cfg) > 0);
 }
 #endif
@@ -107,7 +113,7 @@ int st25r_process_deferred_interrupt(const struct device *dev)
 	cfg = dev->config;
 
 	do {
-		st25r3916Isr();
+		st25r_chip_isr();
 
 		if (st25r->deferred_handler == NULL) {
 			return 0;

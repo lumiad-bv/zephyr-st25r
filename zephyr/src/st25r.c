@@ -17,6 +17,10 @@
 
 #include "st25r.h"
 
+#if defined(CONFIG_ST25R500) && DT_ANY_INST_ON_BUS_STATUS_OKAY(i2c)
+#error "The ST25R500 RFAL driver has no I2C transport; put the st,st25r node on SPI"
+#endif
+
 LOG_MODULE_REGISTER(ST25R, CONFIG_ST25R_LOG_LEVEL);
 
 static int st25r_init_interface(const struct device *dev)
@@ -48,6 +52,14 @@ static int st25r_init(const struct device *dev)
 	    return -EINVAL;
 	}
 
+	if (cfg->reset_gpio.port) {
+		if (!gpio_is_ready_dt(&cfg->reset_gpio) ||
+		    gpio_pin_configure_dt(&cfg->reset_gpio, GPIO_OUTPUT_INACTIVE) < 0) {
+			LOG_ERR("Failed to configure reset pin");
+			return -EIO;
+		}
+	}
+
 	if (cfg->int_gpio.port) {
 		if (st25r_init_interrupt(dev) < 0) {
 			LOG_ERR("Failed to initialize interrupts");
@@ -73,6 +85,7 @@ static int st25r_init(const struct device *dev)
 		COND_CODE_1(DT_INST_ON_BUS(inst, i2c), ST25R_I2C(inst), ())			\
 		COND_CODE_1(DT_INST_ON_BUS(inst, spi), ST25R_SPI(inst), ())			\
 		.int_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, irq_gpios, { 0 }),          \
+		.reset_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, reset_gpios, { 0 }),      \
 	};											\
 												\
 	DEVICE_DT_INST_DEFINE(inst, st25r_init, NULL,						\

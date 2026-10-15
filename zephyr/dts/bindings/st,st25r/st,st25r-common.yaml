@@ -8,3 +8,9 @@ properties:
       type: phandle-array
       required: true
       description: IRQ pin (active high)
+
+    reset-gpios:
+      type: phandle-array
+      description: |
+        Optional RESET pin. Its active level holds the IC in reset. Used by
+        the ST25R500/ST25R300 driver; the ST25R3916 has no reset pin.

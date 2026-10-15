@@ -1,7 +1,8 @@
 # zephyr-st25r
 
 This repo provides a Zephyr module with a driver for the ST25R NFC reader IC. 
-In particular, the ST25R3916 and ST25R3916B ICs are supported.
+In particular, the ST25R3916, ST25R3916B and ST25R500 ICs are supported.
+The ST25R500 driver also drives the ST25R300.
 
 This driver supports at most one instance of the ST25R on the SPI or I2C bus.
 
@@ -36,6 +37,15 @@ CONFIG_ST25R_TRIGGER_GLOBAL_THREAD=y
 CONFIG_RFAL_FEATURE_NFCA=y
 CONFIG_RFAL_FEATURE_ISO_DEP=y
 CONFIG_RFAL_FEATURE_ISO_DEP_POLL=y
+```
+
+Select exactly one IC: `CONFIG_ST25R3916`, `CONFIG_ST25R3916B` or
+`CONFIG_ST25R500`. Use `CONFIG_ST25R500` for an ST25R300 too. The ST25R500
+driver is SPI only. It uses the optional `reset-gpios` property to reset the
+IC at init and for the hard-reset low-power mode:
+
+```
+        reset-gpios = <&gpio2 8 GPIO_ACTIVE_HIGH>;
 ```
 
 After that you can use RFAL to drive the IC

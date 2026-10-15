@@ -17,6 +17,7 @@
  * @i2c: I2C bus spec.
  * @pm: Power mode (lis2dh_powermode).
  * @int_gpio: GPIO spec for sensor pin interrupt.
+ * @reset_gpio: Optional GPIO spec for the RESET pin.
  */
 struct st25r_device_config {
 #if DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
@@ -26,6 +27,7 @@ struct st25r_device_config {
 	struct i2c_dt_spec i2c;
 #endif
 	struct gpio_dt_spec int_gpio;
+	struct gpio_dt_spec reset_gpio;
 };
 
 /* sensor data */

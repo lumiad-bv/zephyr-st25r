@@ -20,7 +20,12 @@ extern "C" {
 typedef void (*st25r_deferred_trigger_handler_t)(const struct device *dev,
                                                   void *context);
 
-/** Install the ISR callback and enable GPIO, or pass NULL to disable it. */
+/**
+ * Install the ISR callback and enable GPIO, or pass NULL to disable it.
+ *
+ * An IRQ that is already pending at install raises no edge. It is drained by
+ * the next RFAL interrupt check, after which edges are reported again.
+ */
 int st25r_set_deferred_trigger_handler(
     const struct device *dev,
     st25r_deferred_trigger_handler_t handler,
@@ -30,8 +35,9 @@ int st25r_set_deferred_trigger_handler(
  * Thread-context counterpart of st25r_deferred_trigger_handler_t.
  *
  * This performs the SPI interrupt-register drain and re-enables the GPIO
- * interrupt if a deferred handler remains installed. Never call it from ISR
- * context.
+ * interrupt if a deferred handler remains installed. If the IRQ line is active
+ * again after re-enabling, it drains again rather than wait for an edge that
+ * will not come. Never call it from ISR context.
  */
 int st25r_process_deferred_interrupt(const struct device *dev);
 
